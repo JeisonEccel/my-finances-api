@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.Objects;
 
 import static com.jeisoneccel.my_finances.classes.users.UserDefaults.DEFAULT_USER_EMAIL_VERIFIED;
-import static com.jeisoneccel.my_finances.classes.users.UserDefaults.PASSWORD_ENCODER_ID;
 
 @Entity
 @Table(
@@ -91,7 +90,7 @@ public class User extends AbstractEntity implements UserDetails {
     @JsonIgnore
     @Override
     public String getPassword() {
-        return PASSWORD_ENCODER_ID + password;
+        return password;
     }
 
     @Override

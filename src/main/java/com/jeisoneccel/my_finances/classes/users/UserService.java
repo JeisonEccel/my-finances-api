@@ -7,7 +7,6 @@ import com.jeisoneccel.my_finances.utils.ServiceUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,7 +26,7 @@ public class UserService implements UserDetailsService, BasicService<User, UserM
     private final ServiceUtils serviceUtils;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public User loadUserByUsername(String username) throws UsernameNotFoundException {
         log.info(TYPE + ": Fetching by username ({})", username);
         return repository.findByEmailIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException(TYPE));

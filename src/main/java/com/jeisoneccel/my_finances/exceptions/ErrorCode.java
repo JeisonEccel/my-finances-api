@@ -7,6 +7,7 @@ public enum ErrorCode {
     ERR0A00001("Record not found"),
     ERR0A00002("Record already exists"),
     ERR0A00003("Field is not updatable"),
+    ERR0A00004("Invalid username or password"),
 
     // ERR0V -> Validations
     ERR0V00001("Zoned Date Time format not valid. Value must follow the pattern 'yyyy-MM-ddTHH:mm:ss±zone-offset'"),

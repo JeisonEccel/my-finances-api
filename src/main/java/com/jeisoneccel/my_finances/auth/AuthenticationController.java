@@ -1,5 +1,6 @@
 package com.jeisoneccel.my_finances.auth;
 
+import com.jeisoneccel.my_finances.auth.models.LoginModel;
 import com.jeisoneccel.my_finances.auth.models.RegistrationModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,11 @@ public class AuthenticationController {
     @PostMapping({"/register", "/register/"})
     public ResponseEntity<AuthenticationResponse> register(@RequestBody RegistrationModel model) {
         return new ResponseEntity<>(service.register(model), HttpStatus.OK);
+    }
+
+    @PostMapping({"/login", "/login/"})
+    public ResponseEntity<AuthenticationResponse> login(@RequestBody LoginModel model) {
+        return new ResponseEntity<>(service.login(model), HttpStatus.OK);
     }
 
 }
