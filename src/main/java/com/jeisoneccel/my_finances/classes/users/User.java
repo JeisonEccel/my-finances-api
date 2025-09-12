@@ -2,6 +2,7 @@ package com.jeisoneccel.my_finances.classes.users;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jeisoneccel.my_finances.core.entities.AbstractEntity;
+import com.jeisoneccel.my_finances.utils.annotations.IgnoreTrim;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -40,12 +41,14 @@ public class User extends AbstractEntity implements UserDetails {
     @Column(name = "email", columnDefinition = "varchar(255)", nullable = false, unique = true)
     private String email;
 
+    @IgnoreTrim
     @Column(name = "password", columnDefinition = "text", nullable = false)
     private String password;
 
     @Column(name = "email_verified", columnDefinition = "boolean default false", nullable = false)
     private boolean emailVerified = DEFAULT_USER_EMAIL_VERIFIED;
 
+    @IgnoreTrim
     @Column(name = "refresh_token", columnDefinition = "text")
     private String refreshToken;
 

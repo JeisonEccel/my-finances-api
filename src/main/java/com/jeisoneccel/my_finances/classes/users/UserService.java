@@ -3,6 +3,7 @@ package com.jeisoneccel.my_finances.classes.users;
 import com.jeisoneccel.my_finances.core.services.BasicService;
 import com.jeisoneccel.my_finances.exceptions.custom.RecordAlreadyExistsException;
 import com.jeisoneccel.my_finances.exceptions.custom.RecordNotFoundException;
+import com.jeisoneccel.my_finances.utils.ServiceUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class UserService implements UserDetailsService, BasicService<User, UserM
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final ServiceUtils serviceUtils;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -41,10 +43,7 @@ public class UserService implements UserDetailsService, BasicService<User, UserM
     @Override
     public User create(@NonNull UserModel model) {
         log.info(TYPE + ": Creating new with model ({})", model);
-        User entity = new User();
-        entity.setName(model.getName());
-        entity.setEmail(model.getEmail());
-        entity.setPassword(model.getPassword());
+        User entity = serviceUtils.mapModelToEntity(model, new User());
         validate(entity);
         entity.setPassword(encodePassword(model.getPassword()));
         return repository.save(entity);
