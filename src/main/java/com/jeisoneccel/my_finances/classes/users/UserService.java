@@ -52,17 +52,7 @@ public class UserService implements UserDetailsService, BasicService<User, UserM
     @Override
     public User update(@NonNull String id, @NonNull HashMap<String, Object> updates) {
         log.info(TYPE + ": Updating id ({})", id);
-        User entity = getById(id);
-        if (updates.containsKey("name")) {
-            entity.setName(updates.get("name").toString());
-        }
-        if (updates.containsKey("email")) {
-            entity.setEmail(updates.get("email").toString());
-        }
-        if (updates.containsKey("password")) {
-            entity.setPassword(updates.get("password").toString());
-        }
-
+        User entity = serviceUtils.mapHashToEntity(updates, getById(id));
         validate(entity);
         if (updates.containsKey("password")) {
             entity.setPassword(encodePassword(updates.get("password").toString()));

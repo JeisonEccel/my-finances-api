@@ -1,5 +1,7 @@
 package com.jeisoneccel.my_finances.core.entities;
 
+import com.jeisoneccel.my_finances.utils.annotations.IgnoreOnUpdate;
+import com.jeisoneccel.my_finances.utils.annotations.NotUpdatable;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,10 +24,12 @@ public abstract class AbstractEntity implements Serializable, BasicEntity {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @NotUpdatable
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @IgnoreOnUpdate
     @CreationTimestamp
     @Column(
             name = "created_date",

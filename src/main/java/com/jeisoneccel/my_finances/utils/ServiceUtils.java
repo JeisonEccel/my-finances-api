@@ -1,7 +1,11 @@
 package com.jeisoneccel.my_finances.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jeisoneccel.my_finances.core.entities.BasicEntity;
+import com.jeisoneccel.my_finances.exceptions.custom.OperationNotAllowedException;
+import com.jeisoneccel.my_finances.utils.annotations.IgnoreOnUpdate;
 import com.jeisoneccel.my_finances.utils.annotations.IgnoreTrim;
+import com.jeisoneccel.my_finances.utils.annotations.NotUpdatable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,11 +16,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.jeisoneccel.my_finances.exceptions.ErrorCode.ERR0A00003;
 
 @Slf4j
 @Component
@@ -43,6 +47,46 @@ public class ServiceUtils {
             }
         }
         return entity;
+    }
+
+    public <E> E mapHashToEntity(@NonNull HashMap<String, Object> hashMap, @NonNull E entity) {
+        if (entity instanceof BasicEntity basicEntity && basicEntity.getId() == null) {
+            hashMap.forEach((key, value) -> initializeEntityFieldValue(key, value, entity));
+        } else {
+            hashMap.forEach((key, value) -> updateEntityFieldValue(key, value, entity));
+        }
+
+        return entity;
+    }
+
+    private <E> void initializeEntityFieldValue(String key, Object value, E entity) {
+        Field field = ReflectionUtils.findField(entity.getClass(), key);
+        if (field != null && !Collection.class.isAssignableFrom(field.getType())) {
+            field.setAccessible(true);
+            Object convertedValue = convertValueType(field, value);
+            Object preparedValue = trimValueIfRequired(field, convertedValue);
+            Object currentValue = ReflectionUtils.getField(field, entity);
+            if (preparedValue == null || !Objects.equals(preparedValue, currentValue)) {
+                ReflectionUtils.setField(field, entity, preparedValue);
+            }
+        }
+    }
+
+    private <E> void updateEntityFieldValue(String key, Object value, E entity) {
+        Field field = ReflectionUtils.findField(entity.getClass(), key);
+        if (field != null && !Collection.class.isAssignableFrom(field.getType())) {
+            field.setAccessible(true);
+            Annotation ignoreOnUpdate = field.getDeclaredAnnotation(IgnoreOnUpdate.class);
+            if (ignoreOnUpdate != null) return;
+
+            Object convertedValue = convertValueType(field, value);
+            Object preparedValue = trimValueIfRequired(field, convertedValue);
+            Object currentValue = ReflectionUtils.getField(field, entity);
+            if (preparedValue == null || !Objects.equals(preparedValue, currentValue)) {
+                validateFieldCanBeUpdated(field);
+                ReflectionUtils.setField(field, entity, preparedValue);
+            }
+        }
     }
 
     public List<Field> getAllFields(Class<?> clazz) {
@@ -80,5 +124,13 @@ public class ServiceUtils {
             return stringUtils.trimAll(stringValue);
         }
         return value;
+    }
+
+    public void validateFieldCanBeUpdated(@NonNull Field field) {
+        Annotation notUpdatable = field.getDeclaredAnnotation(NotUpdatable.class);
+        if (notUpdatable != null) {
+            String message = "Field " + field.getName() + " is not updatable";
+            throw new OperationNotAllowedException(ERR0A00003.withMessage(message).withFieldName(field.getName()));
+        }
     }
 }
