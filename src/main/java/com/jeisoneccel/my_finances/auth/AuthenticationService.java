@@ -3,6 +3,8 @@ package com.jeisoneccel.my_finances.auth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeisoneccel.my_finances.auth.models.LoginModel;
 import com.jeisoneccel.my_finances.auth.models.RegistrationModel;
+import com.jeisoneccel.my_finances.auth.refresh_tokens.RefreshToken;
+import com.jeisoneccel.my_finances.auth.refresh_tokens.RefreshTokenService;
 import com.jeisoneccel.my_finances.classes.users.User;
 import com.jeisoneccel.my_finances.classes.users.UserModel;
 import com.jeisoneccel.my_finances.classes.users.UserService;
@@ -27,8 +29,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.UUID;
 
 import static com.jeisoneccel.my_finances.exceptions.ErrorCode.*;
 import static com.jeisoneccel.my_finances.exceptions.ExceptionType.BAD_CREDENTIALS;
@@ -42,36 +42,34 @@ public class AuthenticationService {
 
     private final ServiceUtils serviceUtils;
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
     private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
 
-    public AuthenticationResponse register(RegistrationModel model) {
+    public AuthenticationResponse register(RegistrationModel model, HttpServletRequest request) {
         log.info("Registering a new user with email: {}", model.email());
-        String refreshToken = UUID.randomUUID().toString();
 
         UserModel userModel = serviceUtils.mapModelToEntity(model, new UserModel());
-        userModel.setRefreshToken(refreshToken);
         User user = userService.create(userModel);
 
+        RefreshToken refreshToken = refreshTokenService.create(request, user);
+
         String accessToken = jwtUtils.generateToken(user.getEmail());
-        return new AuthenticationResponse(accessToken, refreshToken);
+        return new AuthenticationResponse(accessToken, refreshToken.getToken());
     }
 
-    public AuthenticationResponse login(LoginModel model) {
+    public AuthenticationResponse login(LoginModel model, HttpServletRequest request) {
         User user = userService.loadUserByUsername(model.username());
 
         if (!passwordEncoder.matches(model.password(), user.getPassword())) {
             throw new BadCredentialsException(ERR0A00004.name());
         }
 
-        String refreshToken = UUID.randomUUID().toString();
-        HashMap<String, Object> updates = new HashMap<>();
-        updates.put("refreshToken", refreshToken);
-        userService.update(user.getId(), updates);
+        RefreshToken refreshToken = refreshTokenService.create(request, user);
 
         String accessToken = jwtUtils.generateToken(user.getEmail());
-        return new AuthenticationResponse(accessToken, refreshToken);
+        return new AuthenticationResponse(accessToken, refreshToken.getToken());
     }
 
     public void authenticate(

@@ -47,10 +47,6 @@ public class User extends AbstractEntity implements UserDetails {
     @Column(name = "email_verified", columnDefinition = "boolean default false", nullable = false)
     private boolean emailVerified = DEFAULT_USER_EMAIL_VERIFIED;
 
-    @IgnoreTrim
-    @Column(name = "refresh_token", columnDefinition = "text")
-    private String refreshToken;
-
     @JsonIgnore
     @Override
     public String getUsername() {
@@ -101,7 +97,6 @@ public class User extends AbstractEntity implements UserDetails {
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
                 ", emailVerified=" + emailVerified +
-                ", refreshToken='" + refreshToken + '\'' +
                 ", createdDate=" + getCreatedDate() +
                 '}';
     }
