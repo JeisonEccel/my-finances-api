@@ -1,6 +1,9 @@
 app:
   name: My Finances
 
+jwt:
+  secret: ${JWT_SECRET}
+
 spring:
   application:
     name: my-finances
