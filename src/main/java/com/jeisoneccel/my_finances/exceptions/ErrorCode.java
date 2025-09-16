@@ -11,6 +11,7 @@ public enum ErrorCode {
     ERR0A00005("Missing bearer token"),
     ERR0A00006("Expired bearer token"),
     ERR0A00007("Invalid bearer token"),
+    ERR0A00008("Invalid refresh token"),
 
     // ERR0V -> Validations
     ERR0V00001("Zoned Date Time format not valid. Value must follow the pattern 'yyyy-MM-ddTHH:mm:ss±zone-offset'"),

@@ -2,6 +2,7 @@ package com.jeisoneccel.my_finances.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeisoneccel.my_finances.auth.models.LoginModel;
+import com.jeisoneccel.my_finances.auth.models.RefreshModel;
 import com.jeisoneccel.my_finances.auth.models.RegistrationModel;
 import com.jeisoneccel.my_finances.auth.refresh_tokens.RefreshToken;
 import com.jeisoneccel.my_finances.auth.refresh_tokens.RefreshTokenService;
@@ -65,6 +66,16 @@ public class AuthenticationService {
         if (!passwordEncoder.matches(model.password(), user.getPassword())) {
             throw new BadCredentialsException(ERR0A00004.name());
         }
+
+        RefreshToken refreshToken = refreshTokenService.create(request, user);
+
+        String accessToken = jwtUtils.generateToken(user.getEmail());
+        return new AuthenticationResponse(accessToken, refreshToken.getToken());
+    }
+
+    public AuthenticationResponse refresh(RefreshModel model, HttpServletRequest request) {
+        RefreshToken currentToken = refreshTokenService.revokeToken(model.token());
+        User user = currentToken.getUser();
 
         RefreshToken refreshToken = refreshTokenService.create(request, user);
 

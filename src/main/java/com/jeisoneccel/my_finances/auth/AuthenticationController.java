@@ -1,6 +1,7 @@
 package com.jeisoneccel.my_finances.auth;
 
 import com.jeisoneccel.my_finances.auth.models.LoginModel;
+import com.jeisoneccel.my_finances.auth.models.RefreshModel;
 import com.jeisoneccel.my_finances.auth.models.RegistrationModel;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,11 @@ public class AuthenticationController {
     @PostMapping({"/login", "/login/"})
     public ResponseEntity<AuthenticationResponse> login(@RequestBody LoginModel model, HttpServletRequest request) {
         return new ResponseEntity<>(service.login(model, request), HttpStatus.OK);
+    }
+
+    @PostMapping({"/refresh", "/refresh/"})
+    public ResponseEntity<AuthenticationResponse> refresh(@RequestBody RefreshModel model, HttpServletRequest request) {
+        return new ResponseEntity<>(service.refresh(model, request), HttpStatus.OK);
     }
 
 }
