@@ -16,6 +16,8 @@ public interface BasicEntity {
 
     String getId();
 
+    void setId(String id);
+
     ZonedDateTime getCreatedDate();
 
     default void validateSchema() {
