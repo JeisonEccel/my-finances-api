@@ -80,4 +80,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(requestError, new HttpHeaders(), requestError.getHttpStatus());
     }
 
+    @ExceptionHandler({IllegalArgumentException.class})
+    public ResponseEntity<Object> handleIllegalArgument(Exception ex, WebRequest request) {
+        String error = ex.getLocalizedMessage();
+
+        RequestError requestError = new RequestError(BAD_REQUEST, ILLEGAL_ARGUMENT, error);
+        return new ResponseEntity<>(requestError, new HttpHeaders(), requestError.getHttpStatus());
+    }
+
 }
