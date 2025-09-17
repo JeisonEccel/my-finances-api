@@ -27,6 +27,12 @@ public class RequestError {
         addErrorToList(error);
     }
 
+    public RequestError(HttpStatus httpStatus, ExceptionType exceptionType, List<ErrorValue> errors) {
+        this.httpStatus = httpStatus;
+        this.exceptionType = exceptionType.name();
+        this.errors = errors;
+    }
+
     private void addErrorToList(String error) {
         ErrorValue value;
         ErrorCode code = ErrorCode.findByName(error);
