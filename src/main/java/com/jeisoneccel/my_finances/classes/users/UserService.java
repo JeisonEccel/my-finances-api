@@ -67,6 +67,7 @@ public class UserService implements UserDetailsService, BasicService<User, UserM
 
     @Override
     public void validate(@NonNull User entity) {
+        entity.validateSchema();
         validateEmailIsAvailable(entity.getId(), entity.getEmail());
     }
 
