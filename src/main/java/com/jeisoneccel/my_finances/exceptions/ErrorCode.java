@@ -17,7 +17,20 @@ public enum ErrorCode {
     ERR0V00001("Zoned Date Time format not valid. Value must follow the pattern 'yyyy-MM-ddTHH:mm:ss±zone-offset'"),
     ERR0V00002("Local Date format not valid. Value must follow the pattern 'yyyy-MM-dd'"),
     ERR0V00003("Local Date Time format not valid. Value must follow the pattern 'yyyy-MM-ddTHH:mm:ss'"),
-    ERR0V00004("Local Time format not valid. Value must follow the pattern 'HH:mm:ss'");
+    ERR0V00004("Local Time format not valid. Value must follow the pattern 'HH:mm:ss'"),
+    ERR0V00005("Not Null"),
+    ERR0V00006("Not Blank"),
+    ERR0V00007("String must not match given regex"),
+    ERR0V00008("Email format not valid"),
+    ERR0V00009("Max 8 characters"),
+    ERR0V00010("Max 16 characters"),
+    ERR0V00011("Max 32 characters"),
+    ERR0V00012("Max 64 characters"),
+    ERR0V00013("Max 128 characters"),
+    ERR0V00014("Max 255 characters"),
+
+    // ERR01 -> Users
+    ERR0100001("Password must have at least 6 characters and maximum 64");
 
     public String entity;
     public String fieldName;
