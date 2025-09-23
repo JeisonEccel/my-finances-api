@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeisoneccel.my_finances.auth.models.LoginModel;
 import com.jeisoneccel.my_finances.auth.models.RefreshModel;
 import com.jeisoneccel.my_finances.auth.models.RegistrationModel;
+import com.jeisoneccel.my_finances.auth.models.ValidateModel;
 import com.jeisoneccel.my_finances.auth.refresh_tokens.RefreshToken;
 import com.jeisoneccel.my_finances.auth.refresh_tokens.RefreshTokenService;
 import com.jeisoneccel.my_finances.classes.users.User;
@@ -81,6 +82,14 @@ public class AuthenticationService {
 
         String accessToken = jwtUtils.generateToken(user.getEmail());
         return new AuthenticationResponse(accessToken, refreshToken.getToken());
+    }
+
+    public AuthenticationResponse validate(ValidateModel model, HttpServletRequest request) {
+        if (jwtUtils.isValidToken(model.accessToken())) {
+            return new AuthenticationResponse(model.accessToken(), model.refreshToken());
+        }
+
+        return refresh(new RefreshModel(model.refreshToken()), request);
     }
 
     public void authenticate(

@@ -3,6 +3,7 @@ package com.jeisoneccel.my_finances.auth;
 import com.jeisoneccel.my_finances.auth.models.LoginModel;
 import com.jeisoneccel.my_finances.auth.models.RefreshModel;
 import com.jeisoneccel.my_finances.auth.models.RegistrationModel;
+import com.jeisoneccel.my_finances.auth.models.ValidateModel;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,5 +34,11 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> refresh(@RequestBody RefreshModel model, HttpServletRequest request) {
         return new ResponseEntity<>(service.refresh(model, request), HttpStatus.OK);
     }
+
+    @PostMapping({"/validate", "/validate"})
+    public ResponseEntity<AuthenticationResponse> validate(@RequestBody ValidateModel model, HttpServletRequest request) {
+        return new ResponseEntity<>(service.validate(model, request), HttpStatus.OK);
+    }
+
 
 }
