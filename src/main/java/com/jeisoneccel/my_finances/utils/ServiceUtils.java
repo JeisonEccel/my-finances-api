@@ -2,7 +2,9 @@ package com.jeisoneccel.my_finances.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeisoneccel.my_finances.core.entities.BasicEntity;
+import com.jeisoneccel.my_finances.core.repositories.BasicRepository;
 import com.jeisoneccel.my_finances.exceptions.custom.OperationNotAllowedException;
+import com.jeisoneccel.my_finances.exceptions.custom.RepositoryNotFoundException;
 import com.jeisoneccel.my_finances.utils.annotations.IgnoreOnUpdate;
 import com.jeisoneccel.my_finances.utils.annotations.IgnoreTrim;
 import com.jeisoneccel.my_finances.utils.annotations.NotUpdatable;
@@ -12,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
+import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -20,7 +23,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.jeisoneccel.my_finances.MyFinancesApplication.appContext;
 import static com.jeisoneccel.my_finances.exceptions.ErrorCode.ERR0A00003;
+import static com.jeisoneccel.my_finances.exceptions.ErrorCode.ERR0S00002;
 
 @Slf4j
 @Component
@@ -131,6 +136,16 @@ public class ServiceUtils {
         if (notUpdatable != null) {
             String message = "Field " + field.getName() + " is not updatable";
             throw new OperationNotAllowedException(ERR0A00003.withMessage(message).withFieldName(field.getName()));
+        }
+    }
+
+    public <T> BasicRepository<?> getRepositoryBeanForEntity(@NonNull Class<T> entityClass) {
+        String beanName = entityClass.getSimpleName();
+        beanName = Introspector.decapitalize(beanName) + "Repository";
+        try {
+            return (BasicRepository<?>) appContext.getBean(beanName);
+        } catch (Exception e) {
+            throw new RepositoryNotFoundException(ERR0S00002.withEntity(entityClass.getSimpleName()));
         }
     }
 }

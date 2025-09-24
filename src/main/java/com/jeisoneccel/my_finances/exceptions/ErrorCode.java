@@ -13,6 +13,10 @@ public enum ErrorCode {
     ERR0A00007("Invalid bearer token"),
     ERR0A00008("Invalid refresh token"),
 
+    // ERR0S -> Server or Implementation Error
+    ERR0S00001("NestedEntity annotation cannot be used on fields that are not BasicEntity"),
+    ERR0S00002("Repository for given entity not found"),
+
     // ERR0V -> Validations
     ERR0V00001("Zoned Date Time format not valid. Value must follow the pattern 'yyyy-MM-ddTHH:mm:ss±zone-offset'"),
     ERR0V00002("Local Date format not valid. Value must follow the pattern 'yyyy-MM-dd'"),
@@ -28,6 +32,7 @@ public enum ErrorCode {
     ERR0V00012("Max 64 characters"),
     ERR0V00013("Max 128 characters"),
     ERR0V00014("Max 255 characters"),
+    ERR0V00015("Nested id is not valid"),
 
     // ERR01 -> Users
     ERR0100001("Password must have at least 6 characters and maximum 64");
