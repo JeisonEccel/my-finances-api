@@ -39,7 +39,7 @@ public abstract class AbstractServiceTest
      */
 
     @Test
-    void givenValidId_WhenGetById_AssertEquals() {
+    protected void givenValidId_WhenGetById_AssertEquals() {
 //        given
         given(mockRepository.findById(givenId))
                 .willReturn(Optional.of(givenEntity));
@@ -51,7 +51,7 @@ public abstract class AbstractServiceTest
     }
 
     @Test
-    void givenIdNotExists_WhenGetById_WillThrowException() {
+    protected void givenIdNotExists_WhenGetById_WillThrowException() {
 //        given
 //        when
 //        then
@@ -60,7 +60,7 @@ public abstract class AbstractServiceTest
     }
 
     @Test
-    void givenIdIsNull_WhenGetById_WillThrowException() {
+    protected void givenIdIsNull_WhenGetById_WillThrowException() {
 //        given
         String nullId = null;
 //        when
@@ -74,7 +74,7 @@ public abstract class AbstractServiceTest
      */
 
     @Test
-    void givenValidModel_WhenCreate_AssertEquals() {
+    protected void givenValidModel_WhenCreate_AssertEquals() {
 //        given
         given(serviceUtils.mapModelToEntity(givenModel, newEntity())).willReturn(givenEntity);
         S mockedService = spy(underTest);
@@ -90,7 +90,7 @@ public abstract class AbstractServiceTest
     }
 
     @Test
-    void givenModelHasInvalidProperty_WhenCreate_WillThrowException() {
+    protected void givenModelHasInvalidProperty_WhenCreate_WillThrowException() {
 //        given
         given(serviceUtils.mapModelToEntity(givenModel, newEntity())).willReturn(givenEntity);
         S mockedService = spy(underTest);
@@ -102,7 +102,7 @@ public abstract class AbstractServiceTest
     }
 
     @Test
-    void givenModelIsNull_WhenCreate_WillThrowException() {
+    protected void givenModelIsNull_WhenCreate_WillThrowException() {
 //        given
         M nullModel = null;
 //        when
@@ -116,7 +116,7 @@ public abstract class AbstractServiceTest
      */
 
     @Test
-    void givenValidHashMap_WhenUpdate_AssertEquals() {
+    protected void givenValidHashMap_WhenUpdate_AssertEquals() {
 //        given
         S mockedService = spy(underTest);
         doReturn(givenEntity).when(mockedService).getById(givenId);
@@ -132,7 +132,7 @@ public abstract class AbstractServiceTest
     }
 
     @Test
-    void givenIdIsNotValid_WhenUpdate_WillThrowException() {
+    protected void givenIdIsNotValid_WhenUpdate_WillThrowException() {
 //        given
 //        when
 //        then
@@ -141,7 +141,7 @@ public abstract class AbstractServiceTest
     }
 
     @Test
-    void givenIdIsNull_WhenUpdate_WillThrowException() {
+    protected void givenIdIsNull_WhenUpdate_WillThrowException() {
 //        given
         String nullId = null;
 //        when
@@ -151,7 +151,7 @@ public abstract class AbstractServiceTest
     }
 
     @Test
-    void givenHashMapHasInvalidProperty_WhenUpdate_WillThrowException() {
+    protected void givenHashMapHasInvalidProperty_WhenUpdate_WillThrowException() {
 //        given
         S mockedService = spy(underTest);
         doReturn(givenEntity).when(mockedService).getById(givenId);
@@ -164,7 +164,7 @@ public abstract class AbstractServiceTest
     }
 
     @Test
-    void givenHashMapIsNull_WhenUpdate_WillThrowException() {
+    protected void givenHashMapIsNull_WhenUpdate_WillThrowException() {
 //        given
         HashMap<String, Object> nullHashMap = null;
 //        when
@@ -178,7 +178,7 @@ public abstract class AbstractServiceTest
      */
 
     @Test
-    void givenValidId_WhenDelete_AssertEquals() {
+    protected void givenValidId_WhenDelete_AssertEquals() {
 //        given
         S mockedService = spy(underTest);
 //        when
@@ -191,7 +191,7 @@ public abstract class AbstractServiceTest
     }
 
     @Test
-    void givenIdNotExists_WhenDelete_WillThrowException() {
+    protected void givenIdNotExists_WhenDelete_WillThrowException() {
 //        given
 //        when
 //        then
@@ -199,7 +199,7 @@ public abstract class AbstractServiceTest
     }
 
     @Test
-    void givenIdIsNull_WhenDelete_WillThrowException() {
+    protected void givenIdIsNull_WhenDelete_WillThrowException() {
 //        given
         String nullId = null;
 //        when
