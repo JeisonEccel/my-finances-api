@@ -1,5 +1,6 @@
 package com.jeisoneccel.my_finances.classes.users;
 
+import com.jeisoneccel.my_finances.auth.LoggedUser;
 import com.jeisoneccel.my_finances.core.entities.AbstractServiceTest;
 import com.jeisoneccel.my_finances.exceptions.custom.RecordAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,10 +30,12 @@ class UserServiceTest extends AbstractServiceTest<UserService, UserRepository, U
     UserRepository repository;
     @Mock
     PasswordEncoder passwordEncoder;
+    @Mock
+    LoggedUser loggedUser;
 
     @BeforeEach
     void setUp() {
-        underTest = new UserService(repository, passwordEncoder, serviceUtils);
+        underTest = new UserService(repository, passwordEncoder, serviceUtils, loggedUser);
         mockRepository = repository;
         entityClass = User.class;
 

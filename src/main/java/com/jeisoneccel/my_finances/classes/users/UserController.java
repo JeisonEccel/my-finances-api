@@ -14,8 +14,13 @@ public class UserController {
 
     private final UserService service;
 
+    @GetMapping({"", "/"})
+    public ResponseEntity<User> getLoggedUser() {
+        return new ResponseEntity<>(service.getLoggedUser(), HttpStatus.OK);
+    }
+
     @GetMapping({"/{id}", "/{id}/"})
-    public ResponseEntity<User> get(@PathVariable String id) {
+    public ResponseEntity<User> getById(@PathVariable String id) {
         return new ResponseEntity<>(service.getById(id), HttpStatus.OK);
     }
 
