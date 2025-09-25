@@ -1,5 +1,6 @@
 package com.jeisoneccel.my_finances.classes.users;
 
+import com.jeisoneccel.my_finances.auth.LoggedUser;
 import com.jeisoneccel.my_finances.core.services.BasicService;
 import com.jeisoneccel.my_finances.exceptions.custom.RecordAlreadyExistsException;
 import com.jeisoneccel.my_finances.exceptions.custom.RecordNotFoundException;
@@ -26,12 +27,18 @@ public class UserService implements UserDetailsService, BasicService<User, UserM
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final ServiceUtils serviceUtils;
+    private final LoggedUser loggedUser;
 
     @Override
     public User loadUserByUsername(String username) {
         log.info(TYPE + ": Fetching by username ({})", username);
         return repository.findByEmailIgnoreCase(username)
                 .orElseThrow(() -> new BadCredentialsException(ERR0A00004.name()));
+    }
+
+    public User getLoggedUser() {
+        log.info(TYPE + ": Fetching logged user");
+        return loggedUser.getUser();
     }
 
     @Override

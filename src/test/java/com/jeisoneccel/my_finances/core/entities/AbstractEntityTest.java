@@ -1,12 +1,14 @@
 package com.jeisoneccel.my_finances.core.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.jeisoneccel.my_finances.utils.annotations.IgnoreOnUpdate;
 import com.jeisoneccel.my_finances.utils.annotations.NotUpdatable;
-import com.jeisoneccel.my_finances.utils.validations.ValidNotBlank;
-import com.jeisoneccel.my_finances.utils.validations.ValidNotNull;
-import com.jeisoneccel.my_finances.utils.validations.ValidString;
+import com.jeisoneccel.my_finances.utils.validations.*;
 import jakarta.persistence.Column;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import org.hibernate.annotations.CreationTimestamp;
 import org.junit.jupiter.api.Test;
 
@@ -22,11 +24,17 @@ public abstract class AbstractEntityTest<E extends BasicEntity> {
 
     protected E givenEntity;
     protected List<Class<? extends Annotation>> stringRequiredAnnotations = List.of(ValidString.class);
+    protected Set<Class<? extends Annotation>> basicEntityRequiredAnnotations = Set.of(
+            ValidNestedEntity.class, OneToOne.class
+    );
     protected Set<Class<? extends Annotation>> notNullableRequiredAnnotations = Set.of(
             ValidNotNull.class, ValidNotBlank.class, CreationTimestamp.class
     );
     protected Set<Class<? extends Annotation>> notUpdatableRequiredAnnotations = Set.of(
             NotUpdatable.class, IgnoreOnUpdate.class, CreationTimestamp.class
+    );
+    protected Set<Class<? extends Annotation>> serializerRequiredAnnotations = Set.of(
+            JsonSerialize.class, JsonManagedReference.class, JsonBackReference.class
     );
 
     @Test
@@ -34,6 +42,37 @@ public abstract class AbstractEntityTest<E extends BasicEntity> {
         Arrays.stream(givenEntity.getClass().getDeclaredFields())
                 .filter(field -> field.getType().equals(String.class))
                 .forEach(field -> assertThat(containsStringAnnotations(field)).isEqualTo(true));
+    }
+
+    @Test
+    void givenEntityWithNestedEntityFields_AssertRequiredAnnotationIsPresent() {
+        boolean containsNestedField = givenEntity.getAllFields(givenEntity.getClass()).stream()
+                .anyMatch(field -> BasicEntity.class.isAssignableFrom(field.getType()));
+
+        if (containsNestedField) {
+            assertThat(entityContainsAnnotation(givenEntity, ValidEntityWithNestedField.class)).isTrue();
+        }
+    }
+
+    @Test
+    void givenBasicEntityFields_AssertRequiredAnnotationsArePresent() {
+        givenEntity.getAllFields(givenEntity.getClass()).stream()
+                .filter(field -> BasicEntity.class.isAssignableFrom(field.getType()))
+                .forEach(field -> assertThat(containsBasicEntityAnnotation(field)).isTrue());
+    }
+
+    @Test
+    void givenFieldsAnnotatedWithValidNestedEntity_AssertTypeIsBasicEntity() {
+        givenEntity.getAllFields(givenEntity.getClass()).stream()
+                .filter(this::containsBasicEntityAnnotation)
+                .forEach(field -> assertThat(BasicEntity.class.isAssignableFrom(field.getType())).isTrue());
+    }
+
+    @Test
+    void givenBasicEntityOrSetField_AssertJsonSerializerAnnotationIsPresent() {
+        givenEntity.getAllFields(givenEntity.getClass()).stream()
+                .filter(this::isBasicEntityOrSet)
+                .forEach(field -> assertThat(containsSerializerAnnotation(field)).isTrue());
     }
 
     @Test
@@ -52,6 +91,23 @@ public abstract class AbstractEntityTest<E extends BasicEntity> {
 
     private boolean containsStringAnnotations(Field field) {
         return stringRequiredAnnotations.stream().map(field::isAnnotationPresent).toList().contains(true);
+    }
+
+    private boolean entityContainsAnnotation(E givenEntity, Class<? extends Annotation> annotation) {
+        Class<?> clazz = givenEntity.getClass();
+        while (clazz != Object.class) {
+            if (clazz.isAnnotationPresent(annotation)) return true;
+
+            clazz = clazz.getSuperclass();
+        }
+        return false;
+    }
+
+    private boolean containsBasicEntityAnnotation(Field field) {
+        for (Class<? extends Annotation> requiredAnnotation : basicEntityRequiredAnnotations) {
+            if (field.isAnnotationPresent(requiredAnnotation)) return true;
+        }
+        return false;
     }
 
     private boolean containsNotNullableColumn(Field field) {
@@ -90,6 +146,17 @@ public abstract class AbstractEntityTest<E extends BasicEntity> {
             if (field.isAnnotationPresent(requiredAnnotation)) return true;
         }
         return false;
+    }
+
+    private boolean containsSerializerAnnotation(Field field) {
+        for (Class<? extends Annotation> requiredAnnotation : serializerRequiredAnnotations) {
+            if (field.isAnnotationPresent(requiredAnnotation)) return true;
+        }
+        return false;
+    }
+
+    private boolean isBasicEntityOrSet(Field field) {
+        return BasicEntity.class.isAssignableFrom(field.getType()) || Set.class.isAssignableFrom(field.getType());
     }
 
 }
