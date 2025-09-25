@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -87,6 +88,13 @@ public abstract class AbstractEntityTest<E extends BasicEntity> {
         givenEntity.getAllFields(givenEntity.getClass()).stream()
                 .filter(this::containsNotUpdatableColumn)
                 .forEach(field -> assertThat(containsNotUpdatableAnnotation(field)).isTrue());
+    }
+
+    @Test
+    void givenFieldIsBigDecimal_AssertColumnIsNotNullable() {
+        givenEntity.getAllFields(givenEntity.getClass()).stream()
+                .filter(field -> BigDecimal.class.isAssignableFrom(field.getType()))
+                .forEach(field -> assertThat(containsNotNullableColumn(field)).isTrue());
     }
 
     private boolean containsStringAnnotations(Field field) {
