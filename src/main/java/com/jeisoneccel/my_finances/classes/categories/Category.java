@@ -31,12 +31,6 @@ public class Category extends AbstractEntity {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @ValidString
-    @ValidNotBlank
-    @StringMax128
-    @Column(name = "name", columnDefinition = "varchar(128)", nullable = false)
-    private String name;
-
     @NotUpdatable
     @ValidNotNull
     @ManyToOne
@@ -44,6 +38,12 @@ public class Category extends AbstractEntity {
     @JsonSerialize(using = UserCustomSerializer.class)
     @JoinColumn(name = "owner_id", referencedColumnName = "id", nullable = false, updatable = false)
     private User owner;
+
+    @ValidString
+    @ValidNotBlank
+    @StringMax128
+    @Column(name = "name", columnDefinition = "varchar(128)", nullable = false)
+    private String name;
 
     @ValidNotNull
     @Column(name = "goal", columnDefinition = "numeric(18,6)", nullable = false)
@@ -53,8 +53,8 @@ public class Category extends AbstractEntity {
     public String toString() {
         return "Category{" +
                 "id='" + getId() + '\'' +
-                ", name='" + name + '\'' +
                 ", owner=" + owner +
+                ", name='" + name + '\'' +
                 ", goal=" + goal +
                 ", createdDate=" + getCreatedDate() +
                 '}';
@@ -65,13 +65,13 @@ public class Category extends AbstractEntity {
         if (this == o) return true;
         if (!(o instanceof Category category)) return false;
         return Objects.equals(getId(), category.getId()) &&
-                Objects.equals(getName(), category.getName()) &&
-                Objects.equals(getOwner(), category.getOwner());
+                Objects.equals(getOwner(), category.getOwner()) &&
+                Objects.equals(getName(), category.getName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName(), getOwner());
+        return Objects.hash(getId(), getOwner(), getName());
     }
 
 }

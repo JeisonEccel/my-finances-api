@@ -15,9 +15,9 @@ public class CategoryModel {
 
     @Override
     public String toString() {
-        return "UserModel{" +
+        return "CategoryModel{" +
                 "name='" + name + '\'' +
-                "goal=" + goal +
+                ", goal=" + goal +
                 '}';
     }
 
