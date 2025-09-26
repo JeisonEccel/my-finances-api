@@ -30,12 +30,6 @@ public class Account extends AbstractEntity {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @ValidString
-    @ValidNotBlank
-    @StringMax128
-    @Column(name = "name", columnDefinition = "varchar(128)", nullable = false)
-    private String name;
-
     @NotUpdatable
     @ValidNotNull
     @ManyToOne
@@ -44,12 +38,18 @@ public class Account extends AbstractEntity {
     @JoinColumn(name = "owner_id", referencedColumnName = "id", nullable = false, updatable = false)
     private User owner;
 
+    @ValidString
+    @ValidNotBlank
+    @StringMax128
+    @Column(name = "name", columnDefinition = "varchar(128)", nullable = false)
+    private String name;
+
     @Override
     public String toString() {
         return "Account{" +
                 "id='" + getId() + '\'' +
-                ", name='" + name + '\'' +
                 ", owner=" + owner +
+                ", name='" + name + '\'' +
                 ", createdDate=" + getCreatedDate() +
                 '}';
     }
@@ -59,12 +59,12 @@ public class Account extends AbstractEntity {
         if (this == o) return true;
         if (!(o instanceof Account account)) return false;
         return Objects.equals(getId(), account.getId()) &&
-                Objects.equals(getName(), account.getName()) &&
-                Objects.equals(getOwner(), account.getOwner());
+                Objects.equals(getOwner(), account.getOwner()) &&
+                Objects.equals(getName(), account.getName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getName(), getOwner());
+        return Objects.hash(getId(), getOwner(), getName());
     }
 }
