@@ -13,7 +13,7 @@ public class AccountModel {
 
     @Override
     public String toString() {
-        return "UserModel{" +
+        return "AccountModel{" +
                 "name='" + name + '\'' +
                 '}';
     }
