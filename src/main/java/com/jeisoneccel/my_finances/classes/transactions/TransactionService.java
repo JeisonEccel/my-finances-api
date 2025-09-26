@@ -1,16 +1,20 @@
 package com.jeisoneccel.my_finances.classes.transactions;
 
 import com.jeisoneccel.my_finances.auth.LoggedUser;
+import com.jeisoneccel.my_finances.classes.accounts.Account;
 import com.jeisoneccel.my_finances.classes.accounts.AccountService;
 import com.jeisoneccel.my_finances.classes.categories.CategoryService;
+import com.jeisoneccel.my_finances.classes.users.User;
 import com.jeisoneccel.my_finances.core.services.BasicService;
 import com.jeisoneccel.my_finances.exceptions.custom.RecordNotFoundException;
 import com.jeisoneccel.my_finances.utils.ServiceUtils;
+import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,7 +36,7 @@ public class TransactionService implements BasicService<Transaction, Transaction
 
     public List<Transaction> getAll() {
         log.info(TYPE + ": Fetching all");
-        return repository.findByOwner(loggedUser.getUser());
+        return repository.findByOwnerOrderByDateDescIndexDesc(loggedUser.getUser());
     }
 
     @Override
@@ -43,29 +47,62 @@ public class TransactionService implements BasicService<Transaction, Transaction
     }
 
     @Override
+    @Transactional
     public Transaction create(@NonNull TransactionModel model) {
         log.info(TYPE + ": Creating new with model ({})", model);
         Transaction entity = serviceUtils.mapModelToEntity(model, new Transaction());
         entity.setOwner(loggedUser.getUser());
+        entity.setIndex(getLastIndex(entity));
         validate(entity);
         return repository.save(entity);
     }
 
     @Override
+    @Transactional
     public Transaction update(@NonNull String id, @NonNull HashMap<String, Object> updates) {
         log.info(TYPE + ": Updating id ({})", id);
-        Transaction entity = serviceUtils.mapHashToEntity(updates, getById(id));
-        validate(entity);
-        return repository.save(entity);
+        Transaction initialTransaction = getById(id);
+
+        User owner = initialTransaction.getOwner();
+        LocalDate initialDate = initialTransaction.getDate();
+        int initialIndex = initialTransaction.getIndex();
+        Account initialAccount = initialTransaction.getAccount();
+
+        Transaction updatedTransaction = serviceUtils.mapHashToEntity(updates, initialTransaction);
+
+        if (!initialAccount.equals(updatedTransaction.getAccount())) {
+            log.info("Updated account from {} to {}", initialAccount.getName(), updatedTransaction.getAccount().getName());
+            updateDateIndexes(owner, initialAccount, initialDate);
+            updatedTransaction.setIndex(getLastIndex(updatedTransaction));
+        } else if (!initialDate.equals(updatedTransaction.getDate())) {
+            log.info("Changed date from {} to {}", initialDate, updatedTransaction.getDate());
+            updateDateIndexes(owner, initialAccount, initialDate);
+            updatedTransaction.setIndex(getLastIndex(updatedTransaction));
+        } else if (initialIndex != updatedTransaction.getIndex()) {
+            log.info("Changed index from {} to {}", initialIndex, updatedTransaction.getIndex());
+            int adjustedIndex = updateDateIndexes(updatedTransaction);
+            updatedTransaction.setIndex(adjustedIndex);
+        }
+
+        validate(updatedTransaction);
+
+        return repository.save(updatedTransaction);
     }
 
     @Override
+    @Transactional
     public void delete(@NonNull String id) {
         log.info(TYPE + ": Deleting id ({})", id);
-        Transaction Transaction = repository.findByIdAndOwner(id, loggedUser.getUser()).orElse(null);
-        if (Transaction == null) return;
+        Transaction transaction = repository.findByIdAndOwner(id, loggedUser.getUser()).orElse(null);
+        if (transaction == null) return;
 
-        repository.delete(Transaction);
+        User owner = transaction.getOwner();
+        Account account = transaction.getAccount();
+        LocalDate date = transaction.getDate();
+
+        repository.delete(transaction);
+
+        updateDateIndexes(owner, account, date);
     }
 
     @Override
@@ -91,6 +128,48 @@ public class TransactionService implements BasicService<Transaction, Transaction
         } catch (RecordNotFoundException e) {
             throw new IllegalArgumentException(ERR0200002.name());
         }
+    }
+
+    private int getLastIndex(Transaction transaction) {
+        Transaction lastTransaction = repository.findFirstByOwnerAndAccountAndDateAndIdNotOrderByIndexDesc(
+                transaction.getOwner(), transaction.getAccount(), transaction.getDate(), transaction.getId()
+        ).orElse(null);
+
+        return lastTransaction != null ? lastTransaction.getIndex() + 1 : 1;
+    }
+
+    private void updateDateIndexes(User owner, Account account, LocalDate date) {
+        List<Transaction> transactions = repository.findByOwnerAndAccountAndDateOrderByIndexAsc(
+                owner, account, date
+        );
+
+        int i = 1;
+        for (Transaction t : transactions) {
+            t.setIndex(i);
+            i++;
+        }
+
+        repository.saveAll(transactions);
+    }
+
+    private int updateDateIndexes(Transaction transaction) {
+        List<Transaction> transactions = repository.findByOwnerAndAccountAndDateAndIdNotOrderByIndexAsc(
+                transaction.getOwner(), transaction.getAccount(), transaction.getDate(), transaction.getId()
+        );
+
+        int referenceIndex = Math.min(transaction.getIndex(), transactions.size() + 1);
+        int i = 1;
+        for (Transaction t : transactions) {
+            if (i == referenceIndex) {
+                i++;
+            }
+            t.setIndex(i);
+            i++;
+        }
+
+        repository.saveAll(transactions);
+
+        return referenceIndex;
     }
 
 }

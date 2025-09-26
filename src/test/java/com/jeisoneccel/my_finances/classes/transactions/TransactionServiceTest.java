@@ -71,7 +71,7 @@ class TransactionServiceTest extends AbstractServiceTest<TransactionService, Tra
 //        given
         List<Transaction> emptyList = new ArrayList<>();
         given(loggedUser.getUser()).willReturn(givenUser);
-        given(repository.findByOwner(givenUser)).willReturn(emptyList);
+        given(repository.findByOwnerOrderByDateDescIndexDesc(givenUser)).willReturn(emptyList);
 //        when
         List<Transaction> result = underTest.getAll();
 //        then
@@ -84,7 +84,7 @@ class TransactionServiceTest extends AbstractServiceTest<TransactionService, Tra
         List<Transaction> entityList = new ArrayList<>();
         entityList.add(givenEntity);
         given(loggedUser.getUser()).willReturn(givenUser);
-        given(repository.findByOwner(givenUser)).willReturn(entityList);
+        given(repository.findByOwnerOrderByDateDescIndexDesc(givenUser)).willReturn(entityList);
 //        when
         List<Transaction> result = underTest.getAll();
 //        then
