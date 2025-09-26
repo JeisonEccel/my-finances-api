@@ -35,7 +35,11 @@ public enum ErrorCode {
     ERR0V00015("Nested id is not valid"),
 
     // ERR01 -> Users
-    ERR0100001("Password must have at least 6 characters and maximum 64");
+    ERR0100001("Password must have at least 6 characters and maximum 64"),
+
+    // ERR02 -> Transactions
+    ERR0200001("Account selected is not valid"),
+    ERR0200002("Category selected is not valid");
 
     public String entity;
     public String fieldName;
