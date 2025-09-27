@@ -28,4 +28,7 @@ public interface TransactionRepository extends BasicRepository<Transaction> {
             User owner, Account account, LocalDate date, String id
     );
 
+    List<Transaction> findByOwnerAndAccountAndDateBetweenOrderByDateAscIndexAsc(
+            User owner, Account account, LocalDate start, LocalDate end
+    );
 }

@@ -112,6 +112,12 @@ public class TransactionService implements BasicService<Transaction, Transaction
         validateCategoryIsValid(entity.getCategory().getId());
     }
 
+    public List<Transaction> getTransactionsBetween(Account account, LocalDate start, LocalDate end) {
+        return repository.findByOwnerAndAccountAndDateBetweenOrderByDateAscIndexAsc(
+                loggedUser.getUser(), account, start, end
+        );
+    }
+
     public void validateAccountIsValid(String accountId) {
         log.info("Validating account belongs to user: {}", accountId);
         try {
