@@ -16,19 +16,26 @@ public interface TransactionRepository extends BasicRepository<Transaction> {
 
     Optional<Transaction> findByIdAndOwner(String id, User owner);
 
-    Optional<Transaction> findFirstByOwnerAndAccountAndDateAndIdNotOrderByIndexDesc(
-            User owner, Account account, LocalDate date, String id
-    );
-
-    List<Transaction> findByOwnerAndAccountAndDateOrderByIndexAsc(
+    Optional<Transaction> findFirstByOwnerAndAccountAndDateLessThanEqualOrderByDateDescIndexDesc(
             User owner, Account account, LocalDate date
     );
 
-    List<Transaction> findByOwnerAndAccountAndDateAndIdNotOrderByIndexAsc(
+    Optional<Transaction> findFirstByOwnerAndAccountAndDateLessThanOrderByDateDescIndexDesc(
+            User user, Account account, LocalDate date
+    );
+
+    Optional<Transaction> findFirstByOwnerAndAccountAndDateAndIndexLessThanOrderByIndexDesc(
+            User owner, Account account, LocalDate date, int index
+    );
+
+    List<Transaction> findByOwnerAndAccountAndDateGreaterThanEqualAndIdNotOrderByDateAscIndexAsc(
             User owner, Account account, LocalDate date, String id
     );
 
     List<Transaction> findByOwnerAndAccountAndDateBetweenOrderByDateAscIndexAsc(
             User owner, Account account, LocalDate start, LocalDate end
     );
+
+    List<Transaction> findByOwnerAndAccountOrderByDateAscIndexAsc(User owner, Account account);
+
 }

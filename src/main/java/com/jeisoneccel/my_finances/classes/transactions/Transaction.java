@@ -74,6 +74,10 @@ public class Transaction extends AbstractEntity {
     @JoinColumn(name = "category_id", referencedColumnName = "id", nullable = false)
     private Category category;
 
+    @ValidNotNull
+    @Column(name = "balance", columnDefinition = "numeric(18,6)", nullable = false)
+    private BigDecimal balance = BigDecimal.ZERO;
+
     @Override
     public String toString() {
         return "Transaction{" +
@@ -85,6 +89,7 @@ public class Transaction extends AbstractEntity {
                 ", account=" + (account != null ? account.getName() : "") +
                 ", index=" + index +
                 ", category=" + (category != null ? category.getName() : "") +
+                ", balance=" + balance +
                 ", createdDate=" + getCreatedDate() +
                 '}';
     }
@@ -100,7 +105,8 @@ public class Transaction extends AbstractEntity {
                 Objects.equals(getAmount(), transaction.getAmount()) &&
                 Objects.equals(getAccount(), transaction.getAccount()) &&
                 Objects.equals(getIndex(), transaction.getIndex()) &&
-                Objects.equals(getCategory(), transaction.getCategory());
+                Objects.equals(getCategory(), transaction.getCategory()) &&
+                Objects.equals(getBalance(), transaction.getBalance());
     }
 
     @Override
@@ -113,7 +119,8 @@ public class Transaction extends AbstractEntity {
                 getAmount(),
                 getAccount(),
                 getIndex(),
-                getCategory()
+                getCategory(),
+                getBalance()
         );
     }
 

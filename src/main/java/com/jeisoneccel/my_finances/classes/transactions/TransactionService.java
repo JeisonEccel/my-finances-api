@@ -14,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -52,9 +54,11 @@ public class TransactionService implements BasicService<Transaction, Transaction
         log.info(TYPE + ": Creating new with model ({})", model);
         Transaction entity = serviceUtils.mapModelToEntity(model, new Transaction());
         entity.setOwner(loggedUser.getUser());
-        entity.setIndex(getLastIndex(entity));
+        updateIndexAndBalance(entity);
         validate(entity);
-        return repository.save(entity);
+        Transaction savedTransaction = repository.save(entity);
+        updateFutureTransactions(savedTransaction);
+        return savedTransaction;
     }
 
     @Override
@@ -69,24 +73,29 @@ public class TransactionService implements BasicService<Transaction, Transaction
         Account initialAccount = initialTransaction.getAccount();
 
         Transaction updatedTransaction = serviceUtils.mapHashToEntity(updates, initialTransaction);
+        if (!initialDate.equals(updatedTransaction.getDate())) {
+            updatedTransaction.setIndex(Integer.MAX_VALUE);
+        }
+        updateIndexAndBalance(updatedTransaction);
+        validate(updatedTransaction);
+        Transaction savedTransaction = repository.save(updatedTransaction);
 
-        if (!initialAccount.equals(updatedTransaction.getAccount())) {
-            log.info("Updated account from {} to {}", initialAccount.getName(), updatedTransaction.getAccount().getName());
-            updateDateIndexes(owner, initialAccount, initialDate);
-            updatedTransaction.setIndex(getLastIndex(updatedTransaction));
-        } else if (!initialDate.equals(updatedTransaction.getDate())) {
-            log.info("Changed date from {} to {}", initialDate, updatedTransaction.getDate());
-            updateDateIndexes(owner, initialAccount, initialDate);
-            updatedTransaction.setIndex(getLastIndex(updatedTransaction));
-        } else if (initialIndex != updatedTransaction.getIndex()) {
-            log.info("Changed index from {} to {}", initialIndex, updatedTransaction.getIndex());
-            int adjustedIndex = updateDateIndexes(updatedTransaction);
-            updatedTransaction.setIndex(adjustedIndex);
+        if (!initialAccount.equals(savedTransaction.getAccount())) {
+            log.info("Updated account from {} to {}", initialAccount.getName(), savedTransaction.getAccount().getName());
+            updateFutureTransactions(savedTransaction); // New Account Transactions
+            updateFutureTransactions(owner, initialAccount, initialDate, initialIndex); // Old Account Transactions
+        } else if (initialDate.isBefore(savedTransaction.getDate())) {
+            log.info("Moved transaction from {} to {}", initialDate, savedTransaction.getDate());
+            updateFutureTransactions(owner, initialAccount, initialDate, initialIndex); // Update from old date
+        } else if (initialDate.equals(savedTransaction.getDate()) && initialIndex < savedTransaction.getIndex()) {
+            log.info("Moved position from {} to {}", initialIndex, savedTransaction.getIndex());
+            updateFutureTransactions(owner, initialAccount, initialDate, initialIndex); // Update from old position
+        } else {
+            log.info("Updating transaction balances");
+            updateFutureTransactions(savedTransaction); // Update from new position
         }
 
-        validate(updatedTransaction);
-
-        return repository.save(updatedTransaction);
+        return savedTransaction;
     }
 
     @Override
@@ -99,10 +108,11 @@ public class TransactionService implements BasicService<Transaction, Transaction
         User owner = transaction.getOwner();
         Account account = transaction.getAccount();
         LocalDate date = transaction.getDate();
+        int index = transaction.getIndex();
 
         repository.delete(transaction);
 
-        updateDateIndexes(owner, account, date);
+        updateFutureTransactions(owner, account, date, index);
     }
 
     @Override
@@ -110,6 +120,110 @@ public class TransactionService implements BasicService<Transaction, Transaction
         entity.validateSchema();
         validateAccountIsValid(entity.getAccount().getId());
         validateCategoryIsValid(entity.getCategory().getId());
+    }
+
+    public void updateIndexAndBalance(Transaction transaction) {
+        Transaction lastTransaction = getLastTransaction(
+                transaction.getOwner(), transaction.getAccount(), transaction.getDate(), transaction.getIndex()
+        );
+
+        if (lastTransaction != null) {
+            transaction.setIndex(calculateIndex(transaction, lastTransaction.getDate(), lastTransaction.getIndex()));
+            transaction.setBalance(calculateBalance(transaction, lastTransaction.getBalance()));
+        } else {
+            transaction.setIndex(1);
+            transaction.setBalance(transaction.getAmount());
+        }
+    }
+
+    public Transaction getLastTransaction(User owner, Account account, LocalDate date, int index) {
+        return switch (index) {
+            case 0 -> repository.findFirstByOwnerAndAccountAndDateLessThanEqualOrderByDateDescIndexDesc(
+                    owner, account, date
+            ).orElse(null);
+            case 1 -> repository.findFirstByOwnerAndAccountAndDateLessThanOrderByDateDescIndexDesc(
+                    owner, account, date
+            ).orElse(null);
+            default -> repository.findFirstByOwnerAndAccountAndDateAndIndexLessThanOrderByIndexDesc(
+                    owner, account, date, index
+            ).orElse(null);
+        };
+    }
+
+    public void updateFutureTransactions(User owner, Account account, LocalDate date, int index) {
+        Transaction lastTransaction = getLastTransaction(owner, account, date, index);
+
+        if (lastTransaction != null) {
+            updateFutureTransactions(lastTransaction);
+        } else {
+            updateAllTransactions(owner, account);
+        }
+    }
+
+    public void updateFutureTransactions(Transaction transaction) {
+        List<Transaction> futureTransactions = repository.findByOwnerAndAccountAndDateGreaterThanEqualAndIdNotOrderByDateAscIndexAsc(
+                transaction.getOwner(), transaction.getAccount(), transaction.getDate(), transaction.getId()
+        );
+
+        List<Transaction> updatedTransactions = new ArrayList<>();
+
+        Transaction lt = transaction;
+        for (Transaction t : futureTransactions) {
+            if (t.getDate().equals(lt.getDate()) && t.getIndex() < lt.getIndex()) {
+                continue;
+            }
+
+            t.setIndex(calculateIndex(t, lt.getDate(), lt.getIndex()));
+            t.setBalance(calculateBalance(t, lt.getBalance()));
+            updatedTransactions.add(t);
+
+            lt = t;
+        }
+
+        repository.saveAll(updatedTransactions);
+    }
+
+    public void updateAllTransactions(User owner, Account account) {
+        List<Transaction> futureTransactions = repository.findByOwnerAndAccountOrderByDateAscIndexAsc(owner, account);
+
+        List<Transaction> updatedTransactions = new ArrayList<>();
+
+        LocalDate lastDate = null;
+        int lastIndex = 0;
+        BigDecimal lastBalance = BigDecimal.ZERO;
+        for (Transaction t : futureTransactions) {
+            if (lastDate == null) {
+                t.setIndex(1);
+                t.setBalance(t.getAmount());
+            } else {
+                t.setIndex(calculateIndex(t, lastDate, lastIndex));
+                t.setBalance(calculateBalance(t, lastBalance));
+            }
+
+            updatedTransactions.add(t);
+
+            lastDate = t.getDate();
+            lastIndex = t.getIndex();
+            lastBalance = t.getBalance();
+        }
+
+        repository.saveAll(updatedTransactions);
+    }
+
+    private int calculateIndex(Transaction transaction, LocalDate lastDate, int lastIndex) {
+        if (lastDate == null || !lastDate.equals(transaction.getDate())) {
+            return 1;
+        }
+
+        return lastIndex + 1;
+    }
+
+    private BigDecimal calculateBalance(Transaction transaction, BigDecimal lastBalance) {
+        if (lastBalance == null) {
+            return transaction.getAmount();
+        }
+
+        return lastBalance.add(transaction.getAmount());
     }
 
     public List<Transaction> getTransactionsBetween(Account account, LocalDate start, LocalDate end) {
@@ -134,48 +248,6 @@ public class TransactionService implements BasicService<Transaction, Transaction
         } catch (RecordNotFoundException e) {
             throw new IllegalArgumentException(ERR0200002.name());
         }
-    }
-
-    private int getLastIndex(Transaction transaction) {
-        Transaction lastTransaction = repository.findFirstByOwnerAndAccountAndDateAndIdNotOrderByIndexDesc(
-                transaction.getOwner(), transaction.getAccount(), transaction.getDate(), transaction.getId()
-        ).orElse(null);
-
-        return lastTransaction != null ? lastTransaction.getIndex() + 1 : 1;
-    }
-
-    private void updateDateIndexes(User owner, Account account, LocalDate date) {
-        List<Transaction> transactions = repository.findByOwnerAndAccountAndDateOrderByIndexAsc(
-                owner, account, date
-        );
-
-        int i = 1;
-        for (Transaction t : transactions) {
-            t.setIndex(i);
-            i++;
-        }
-
-        repository.saveAll(transactions);
-    }
-
-    private int updateDateIndexes(Transaction transaction) {
-        List<Transaction> transactions = repository.findByOwnerAndAccountAndDateAndIdNotOrderByIndexAsc(
-                transaction.getOwner(), transaction.getAccount(), transaction.getDate(), transaction.getId()
-        );
-
-        int referenceIndex = Math.min(transaction.getIndex(), transactions.size() + 1);
-        int i = 1;
-        for (Transaction t : transactions) {
-            if (i == referenceIndex) {
-                i++;
-            }
-            t.setIndex(i);
-            i++;
-        }
-
-        repository.saveAll(transactions);
-
-        return referenceIndex;
     }
 
 }
