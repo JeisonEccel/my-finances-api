@@ -46,6 +46,7 @@ class TransactionServiceTest extends AbstractServiceTest<TransactionService, Tra
         givenId = "00000000-0000-0000-0000-000000000000";
         givenEntity = new Transaction();
         givenEntity.setId(givenId);
+        givenEntity.setOwner(new User());
         givenEntity.setDescription(givenDescription);
         givenEntity.setAccount(new Account());
         givenEntity.setCategory(new Category());
@@ -71,7 +72,7 @@ class TransactionServiceTest extends AbstractServiceTest<TransactionService, Tra
 //        given
         List<Transaction> emptyList = new ArrayList<>();
         given(loggedUser.getUser()).willReturn(givenUser);
-        given(repository.findByOwner(givenUser)).willReturn(emptyList);
+        given(repository.findByOwnerOrderByDateDescIndexDesc(givenUser)).willReturn(emptyList);
 //        when
         List<Transaction> result = underTest.getAll();
 //        then
@@ -84,7 +85,7 @@ class TransactionServiceTest extends AbstractServiceTest<TransactionService, Tra
         List<Transaction> entityList = new ArrayList<>();
         entityList.add(givenEntity);
         given(loggedUser.getUser()).willReturn(givenUser);
-        given(repository.findByOwner(givenUser)).willReturn(entityList);
+        given(repository.findByOwnerOrderByDateDescIndexDesc(givenUser)).willReturn(entityList);
 //        when
         List<Transaction> result = underTest.getAll();
 //        then
@@ -95,7 +96,7 @@ class TransactionServiceTest extends AbstractServiceTest<TransactionService, Tra
     getById
      */
 
-    @Override
+    @Test
     protected void givenValidId_WhenGetById_AssertEquals() {
 //        given
         given(loggedUser.getUser()).willReturn(givenUser);
@@ -107,21 +108,64 @@ class TransactionServiceTest extends AbstractServiceTest<TransactionService, Tra
     }
 
     /*
+    create
+     */
+
+    @Test
+    protected void givenValidModel_WhenCreate_AssertEquals() {
+//        given
+        given(serviceUtils.mapModelToEntity(givenModel, newEntity())).willReturn(givenEntity);
+        TransactionService mockedService = spy(underTest);
+        doNothing().when(mockedService).validate(givenEntity);
+        doNothing().when(mockedService).updateFutureTransactions(any());
+//        when
+        mockedService.create(givenModel);
+//        then
+        ArgumentCaptor<Transaction> argumentCaptor = ArgumentCaptor.forClass(entityClass);
+        verify(repository).save(argumentCaptor.capture());
+        Transaction captured = argumentCaptor.getValue();
+        captured.setId(givenId);
+        assertThat(captured).isEqualTo(givenEntity);
+    }
+
+    /*
+    update
+     */
+
+    @Test
+    protected void givenValidHashMap_WhenUpdate_AssertEquals() {
+//        given
+        TransactionService mockedService = spy(underTest);
+        doReturn(givenEntity).when(mockedService).getById(givenId);
+        given(serviceUtils.mapHashToEntity(givenUpdates, givenEntity)).willReturn(givenEntity);
+        doNothing().when(mockedService).validate(givenEntity);
+        given(repository.save(any())).willReturn(givenEntity);
+//        when
+        mockedService.update(givenId, givenUpdates);
+//        then
+        ArgumentCaptor<Transaction> argumentCaptor = ArgumentCaptor.forClass(entityClass);
+        verify(repository).save(argumentCaptor.capture());
+        Transaction captured = argumentCaptor.getValue();
+        assertThat(captured).isEqualTo(givenEntity);
+    }
+
+    /*
     delete
      */
 
-    @Override
+    @Test
     protected void givenValidId_WhenDelete_AssertEquals() {
 //        given
         TransactionService mockedService = spy(underTest);
-        doReturn(givenEntity).when(underTest).getById(givenId);
+        given(loggedUser.getUser()).willReturn(givenUser);
+        given(repository.findByIdAndOwner(givenId, givenUser)).willReturn(Optional.of(givenEntity));
 //        when
         mockedService.delete(givenId);
 //        then
-        ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockRepository).deleteById(argumentCaptor.capture());
-        String captured = argumentCaptor.getValue();
-        assertThat(captured).isEqualTo(givenId);
+        ArgumentCaptor<Transaction> argumentCaptor = ArgumentCaptor.forClass(Transaction.class);
+        verify(repository).delete(argumentCaptor.capture());
+        Transaction captured = argumentCaptor.getValue();
+        assertThat(captured).isEqualTo(givenEntity);
     }
 
 }

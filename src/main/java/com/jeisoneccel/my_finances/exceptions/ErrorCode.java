@@ -33,6 +33,7 @@ public enum ErrorCode {
     ERR0V00013("Max 128 characters"),
     ERR0V00014("Max 255 characters"),
     ERR0V00015("Nested id is not valid"),
+    ERR0V00016("Value must be greater or equal to 1"),
 
     // ERR01 -> Users
     ERR0100001("Password must have at least 6 characters and maximum 64"),

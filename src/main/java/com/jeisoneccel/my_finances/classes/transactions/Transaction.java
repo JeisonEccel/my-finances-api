@@ -63,6 +63,11 @@ public class Transaction extends AbstractEntity {
     private Account account;
 
     @ValidNotNull
+    @ValidMin1
+    @Column(name = "index", columnDefinition = "int default 0", nullable = false)
+    private int index = 0;
+
+    @ValidNotNull
     @ManyToOne
     @ValidNestedEntity
     @JsonSerialize(using = CategoryCustomSerializer.class)
@@ -77,11 +82,13 @@ public class Transaction extends AbstractEntity {
     public String toString() {
         return "Transaction{" +
                 "id='" + getId() + '\'' +
-                ", owner=" + owner +
+                ", owner=" + (owner != null ? owner.getName() : "") +
+                ", date=" + date +
                 ", description='" + description + '\'' +
                 ", amount=" + amount +
-                ", account=" + account +
-                ", category=" + category +
+                ", account=" + (account != null ? account.getName() : "") +
+                ", index=" + index +
+                ", category=" + (category != null ? category.getName() : "") +
                 ", balance=" + balance +
                 ", createdDate=" + getCreatedDate() +
                 '}';
@@ -93,9 +100,11 @@ public class Transaction extends AbstractEntity {
         if (!(o instanceof Transaction transaction)) return false;
         return Objects.equals(getId(), transaction.getId()) &&
                 Objects.equals(getOwner(), transaction.getOwner()) &&
+                Objects.equals(getDate(), transaction.getDate()) &&
                 Objects.equals(getDescription(), transaction.getDescription()) &&
                 Objects.equals(getAmount(), transaction.getAmount()) &&
                 Objects.equals(getAccount(), transaction.getAccount()) &&
+                Objects.equals(getIndex(), transaction.getIndex()) &&
                 Objects.equals(getCategory(), transaction.getCategory()) &&
                 Objects.equals(getBalance(), transaction.getBalance());
     }
@@ -105,9 +114,11 @@ public class Transaction extends AbstractEntity {
         return Objects.hash(
                 getId(),
                 getOwner(),
+                getDate(),
                 getDescription(),
                 getAmount(),
                 getAccount(),
+                getIndex(),
                 getCategory(),
                 getBalance()
         );
